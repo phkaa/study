@@ -1,0 +1,28 @@
+#### Keycloak
+- 계정 관리 및 Access 관리를 제공한다. 
+- 기능
+  - SSO(Single Sign On) 기능
+  - ID 중개와 소셜 로그인 기능
+  - 관리자 및 계정 관리 콘솔 제공
+  - 표준 프로토콜 지원(OpenID Connect, OAuth2.0, SAML)
+- Keycloak 폴더 구조
+  - bin: 여기에는 서버를 부팅하거나 서버에서 다른 관리 작업을 수행하기 위한 다양한 스크립트가 포함되어 있다.
+  - domain: 여기에는 도메인 모드 에서 Keycloak을 실행할 때 구성 파일과 작업 디렉토리가 포함되어 있다.
+  - modules: 서버에서 사용하는 java 라이브러리가 포함되어 있다.
+  - standalone: standalone 모드로 실행시 Keycloak의 설정 파일과 작업 폴더가 포함되어 있다.
+  - standalone/deployments: Keycloak 에 대한 Extension 을 추가하는 공간이다.
+  - themes: 로그인, 회원 가입 등의 UI 에 대한 파일이 포함되어 있다.
+  - [참고-공식문서](https://www.keycloak.org/docs/latest/server_installation/#distribution-directory-structure)
+- 실행 모드
+  - Standalone Mode
+  - Standalone Clustered Mode
+  - Domain Clustered Mode
+  - Cross Datacenter Replication Mode
+  - [참고-공식문서](https://www.keycloak.org/docs/latest/server_installation/#_operating-mode)
+- Keycloak 관련 용어
+  - OIDC: OAuth 는 권한 부여를 다루는 것이지만, OIDC는 OAuth 를 포함하여 인증과 권한 부여를 모두 포함한 것이다.
+  - Realm: 인증, 권한 부여가 적용되는 범위를 나타내는 범위이다. SSO 를 적용한다고 했을때 해당 SSO가 적용되는 범위는 Realm 단위이다.
+  - Client: 인증, 권한 부여 행위를 대행하도록 맡길 어플리케이션을 나타내는 단위이다. 이 단위는 웹사이트 혹은 RestAPI 를 제공하는 서비스가 될 수 있다. 하나의 Realm 에 N 개의 Client 를 생성 및 관리 할 수 있다.
+  - User: Client 에 인증을 요청할 사용자를 나타낸다. 하나의 Realm 에는 Realm 에 종속된 N 개의 User 를 생성하고 관리 할 수 있다. 기본적으로 User는 Username, Email, FirstName, LastName 으로 구성되어 있지만 Custom User Attribute 를 사용하면 사용자가 원하는 속성을 추가 할 수 있다.
+  - Role: User 에게 부여할 권한 내용을 나타낸다.
+  - Group: User 가 속할 수 있는 그룹이다. Group 에 Role 을 매핑할 수 있고 Group 에 속한 사용자는 권한을 상속 받게 된다.
