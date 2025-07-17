@@ -1,3 +1,11 @@
+# 목차
+
+- [Spring Batch vs Spring Batch Plus (Kotlin)](#spring-batch-vs-spring-batch-plus-kotlin)
+- [Processor 구조 차이 및 장단점](#processor-구조-차이-및-장단점)
+- [Spring Batch: `chunk` vs `tasklet` 방식 비교](#spring-batch-chunk-vs-tasklet-방식-비교)
+
+---
+
 # Spring Batch (Java) vs Spring Batch Plus (Kotlin)
 
 이 문서는 **Java 11 기반 Spring Batch**와 **Kotlin 기반 Spring Batch Plus**를 사용하여 동일한 배치 Job을 구현한 예제와 구조적 차이를 설명합니다.
@@ -213,9 +221,10 @@ class SampleWriter : ItemWriter<List<SampleEntity>> {
 - Java의 `spring-batch`는 복잡하지만 견고한 표준 기반 구현에 적합하며, 세세한 설정 제어에 강점을 가집니다.
 - Kotlin의 `spring-batch-plus`는 `List<T>` 단위의 Reader/Writer 흐름으로 **페이징 기반 대량 처리에 더 간단하고 효율적**입니다.
 - 팀의 언어 선택, 데이터 처리 구조에 따라 적절한 방식 선택이 필요합니다.
----
 
-## ⚙️ Processor 구조 차이 및 장단점
+<br><br><br>
+
+# Processor 구조 차이 및 장단점
 
 Spring Batch에서 가장 큰 차이점은 `Processor` 처리 단위입니다.  
 Java에서는 개별 아이템 단위 (`T`), Kotlin(Spring Batch Plus)에서는 리스트 단위 (`List<T>`)로 처리합니다.
@@ -251,3 +260,50 @@ Java에서는 개별 아이템 단위 (`T`), Kotlin(Spring Batch Plus)에서는 
 - **에러 추적 어려움**: 문제가 생긴 개별 아이템 추적이 어려움
 - **Spring Batch 기본 전략과 다름**: Skip, Retry 등은 별도 처리 필요
 - **학습 난이도 상승**: Spring Batch의 표준에서 벗어난 구조
+
+<br><br><br>
+
+# Spring Batch: `chunk` vs `tasklet` 방식 비교
+
+Spring Batch에서는 배치 처리 방식을 크게 두 가지로 나눌 수 있습니다: `chunk` 방식과 `tasklet` 방식.  
+이 문서는 이 두 방식의 차이점, 장단점, 사용 시기를 비교합니다.
+
+---
+
+## ✅ 비교표
+
+| 항목              | `chunk` 방식                                               | `tasklet` 방식                                |
+| ----------------- | ---------------------------------------------------------- | --------------------------------------------- |
+| **개념**          | 데이터를 청크 단위로 처리 (예: 10건씩 읽고 처리)           | 단일 작업(Task)을 한번에 실행                 |
+| **처리 단위**     | `ItemReader → ItemProcessor → ItemWriter` 흐름 (단위 처리) | 한 번에 전체 처리 or 페이지 루프 등 직접 제어 |
+| **트랜잭션 관리** | 청크 단위로 커밋 / 롤백 (세분화 가능)                      | 한 Tasklet이 하나의 트랜잭션 (롤백 범위 큼)   |
+| **에러 핸들링**   | `skip`, `retry`, `fault-tolerant` 등 풍부한 에러 제어      | 수동 구현 필요                                |
+| **병렬 처리**     | 병렬 처리 쉽게 지원 (partition, parallel step 등)          | 구현 어려움, 직접 쓰레딩해야 함               |
+| **재시작**        | 청크 처리 상태 저장 (`ExecutionContext`)으로 재시작 용이   | 재시작 지점 수동 관리 필요                    |
+| **성능**          | 대량 처리에 최적화됨 (버퍼, 커밋 제어)                     | 반복문 잘못 쓰면 메모리 낭비 가능             |
+| **구현 복잡도**   | 구조화된 방식 (파일럿 수준이면 쉽지 않음)                  | 단순한 로직은 빠르게 구현 가능                |
+| **유연성**        | 구조가 고정되어 있음 (Reader/Writer/Processor 필요)        | 자유도 높음 (모든 흐름 커스터마이징 가능)     |
+| **일괄 처리**     | 대용량 배치에 최적화                                       | 간단한 배치나 전처리 등에 적합                |
+
+---
+
+## 🟢 언제 `chunk`를 쓰나?
+
+- 대량의 데이터를 안정적으로, 트랜잭션 단위로 처리해야 할 때
+- Spring Batch의 핵심 기능 (`retry`, `skip`, `listener`, `chunk commit`)을 활용할 때
+- 성능과 안정성, 병렬 처리까지 고려한 대규모 배치 시스템이 필요할 때
+
+## 🔵 언제 `tasklet`을 쓰나?
+
+- 단순 반복 작업 또는 초기화 작업 (예: 파일 삭제, 테이블 초기화 등)
+- 복잡한 흐름 제어가 필요할 때 (ex: 여러 페이지 조회 후 전체 가공)
+- Reader/Processor/Writer 분리가 불필요하거나 오히려 불편할 때
+- `List<T>` 단위로 유연하게 로직을 짜야 할 때
+
+---
+
+## ✍️ 결론
+
+- 대부분의 배치 작업에서는 `chunk`가 권장됩니다.
+- 그러나 **정형화된 흐름이 불편하거나, List 단위 로직이 중요한 경우에는 `tasklet`도 훌륭한 선택지**입니다.
+- 실무에서는 두 방식을 **혼합**하여 사용하기도 합니다 (예: 메타 초기화 tasklet → 본 처리 chunk step).
